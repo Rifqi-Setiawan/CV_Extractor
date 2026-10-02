@@ -1,0 +1,13 @@
+[project]
+name = "cv-section-extractor"
+version = "0.1.0"
+description = "Extract name, contact and sections from CV/resume PDFs (EN + ID) — rule-based, CPU-only, zero cost."
+requires-python = ">=3.10"
+
+[tool.pytest.ini_options]
+pythonpath = ["src"]
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 110
+src = ["src"]
