@@ -1,5 +1,10 @@
 [server]
-maxUploadSize = 20
+port = 8502
+address = "127.0.0.1"
+headless = true
+maxUploadSize = 50
+enableCORS = false
+enableXsrfProtection = false
 
 [browser]
 gatherUsageStats = false

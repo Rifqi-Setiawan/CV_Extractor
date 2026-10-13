@@ -20,11 +20,13 @@ from typing import Optional
 
 from cv_extractor.application.ports import HeadingLabeler, LabelResult
 from cv_extractor.domain.models import TextLine, TextSource
-from cv_extractor.services.text_cleaning import alnum_count, heading_display_text
+from cv_extractor.domain.section_labels import SECTION_ALIASES
+from cv_extractor.services.text_cleaning import alnum_count, heading_display_text, normalize_heading
 
 _YEAR = re.compile(r"\b(?:19|20)\d{2}\b")
 _KEY_VALUE = re.compile(r"\w\s*:\s*\w")
 _CONTACT = re.compile(r"@|https?://|www\.|\d{6,}")
+_KNOWN_HEADING_EXACT = {normalize_heading(a) for aliases in SECTION_ALIASES.values() for a in aliases}
 
 ANCHOR_SCORE = 90.0
 ANCHOR_SCORE_STYLED = 84.0
@@ -178,8 +180,12 @@ def is_heading_candidate(line: TextLine) -> bool:
     if raw[-1:] in ".,;" or (raw[-1:] == ":" and len(words) > 3):
         return False
     first_alpha = next((c for c in text if c.isalpha()), "")
-    if not first_alpha or first_alpha.islower():
+    if not first_alpha:
         return False
+    if first_alpha.islower():
+        norm = normalize_heading(text)
+        if norm not in _KNOWN_HEADING_EXACT:
+            return False
     if _YEAR.search(text) or _CONTACT.search(text) or _KEY_VALUE.search(text):
         return False
     return True

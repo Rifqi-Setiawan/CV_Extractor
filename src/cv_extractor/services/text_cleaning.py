@@ -10,12 +10,14 @@ _LEADING_BULLET = re.compile(
     r"|[-]|e@|e(?=\s)|o(?=\s))\s*"
 )
 _PRIVATE_USE = re.compile(r"[-]")
+_ZERO_WIDTH_AND_BIDI = re.compile(r"[\u200b-\u200f\u202a-\u202e\ufeff]")
 _URL = re.compile(r"(?:https?://|www\.)\S+|\b[\w-]+\.(?:com|id|ly|io|me|dev|net|org)/\S*", re.I)
 _MULTISPACE = re.compile(r"[ \t]+")
 
 
 def clean_line(text: str) -> str:
     """Strip bullets and private-use glyphs, collapse whitespace."""
+    text = _ZERO_WIDTH_AND_BIDI.sub("", text)
     text = _LEADING_BULLET.sub("", text, count=1)
     text = _PRIVATE_USE.sub("", text)
     return _MULTISPACE.sub(" ", text).strip()

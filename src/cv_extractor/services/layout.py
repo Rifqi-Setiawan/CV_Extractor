@@ -83,6 +83,10 @@ def merge_same_row(lines: list[TextLine], max_gap_ratio: float = 30.0) -> list[T
     Example: "Technical Leader" (x=38) and "Januari 2024 - April 2025" (x=418) become
     one line, so the date stays attached to its job title.
     """
+    from cv_extractor.domain.section_labels import SECTION_ALIASES
+    from cv_extractor.services.text_cleaning import normalize_heading
+    known_section_aliases = {normalize_heading(a) for aliases in SECTION_ALIASES.values() for a in aliases}
+
     rows: list[list[TextLine]] = []
     for line in sorted(lines, key=lambda l: (l.column, l.bbox.y_center, l.bbox.x0)):
         if rows and _same_row(rows[-1][-1], line):
@@ -96,6 +100,17 @@ def merge_same_row(lines: list[TextLine], max_gap_ratio: float = 30.0) -> list[T
         if len(row) == 1:
             merged.append(row[0])
             continue
+
+        # If the first item on the row is an anchor section heading separated by a noticeable gap,
+        # preserve it as its own line instead of merging into body text.
+        first_norm = normalize_heading(row[0].text)
+        if first_norm in known_section_aliases and (row[1].bbox.x0 - row[0].bbox.x1) > row[0].size * 1.8:
+            merged.append(row[0])
+            row = row[1:]
+            if len(row) == 1:
+                merged.append(row[0])
+                continue
+
         first = row[0]
         text = row[0].text
         for prev, cur in zip(row, row[1:]):
